@@ -4,7 +4,7 @@ import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { difference, equationString, isBalanced, type Item, type Side } from './rules.ts';
 import type { Game, GameEvent } from './game.ts';
-import { SEESAW, SHARE_PLATES, PLATE_HALF, panSlot, START } from './layout.ts';
+import { SEESAW, SHARE_PLATES, PLATE_HALF, panSlot, START, supplySlot } from './layout.ts';
 import { findClip, type LoadedModels } from './models.ts';
 import {
   BEAM_Y,
@@ -538,7 +538,8 @@ export class View {
     if (this.supplyAnchor) {
       this.supplyAnchor.getWorldPosition(tmp);
       s.supply.forEach((it, i) => {
-        out.set(it.id, { pos: new THREE.Vector3(tmp.x - 0.3 + (i % 3) * 0.3, tmp.y, tmp.z - 0.15 + Math.floor(i / 3) * 0.3), item: it, rotY: 0 });
+        const p = supplySlot(i);
+        out.set(it.id, { pos: new THREE.Vector3(p.x, tmp.y, p.z), item: it, rotY: 0 });
       });
     }
     if (this.seesaw) {
@@ -638,9 +639,11 @@ export class View {
       const item = game.pickOnPan(pan.scale, pan.side);
       return this.items.get(item.id) ?? null;
     }
+    const sup = game.pickSupply();
+    if (sup) return this.items.get(sup.id) ?? null;
     let best: THREE.Object3D | null = null;
     let bd = 1.25;
-    for (const it of [...game.stall.ground, ...game.stall.supply, ...game.stall.seesaw]) {
+    for (const it of [...game.stall.ground, ...game.stall.seesaw]) {
       const o = this.items.get(it.id);
       if (!o) continue;
       const d = Math.hypot(o.position.x - game.goose.x, o.position.z - game.goose.z);

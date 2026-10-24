@@ -12,6 +12,8 @@ import { Input } from './input.ts';
 import { loadModels } from './models.ts';
 import { initAudio, isMuted, setMuted, sfx } from './audio.ts';
 import { seesawLoad } from './rules.ts';
+import { solve } from './solver.ts';
+import { CHANGE_BOX, SHARE_PLATES, SUPPLY, panCenter } from './layout.ts';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const STEP = 1 / 60;
@@ -615,7 +617,7 @@ declare global {
     render_game_to_text: () => string;
     advanceTime: (ms: number) => void;
     __game: () => Game;
-    __debug: { bench: (n?: number) => unknown; pixelRatio: () => number; fps: () => number; start: (i: number) => void; act: (a: string) => void; move: (x: number, z: number, ms: number) => void; info: () => unknown };
+    __debug: { autosolve: (i: number) => unknown; bench: (n?: number) => unknown; pixelRatio: () => number; fps: () => number; start: (i: number) => void; act: (a: string) => void; move: (x: number, z: number, ms: number) => void; info: () => unknown };
   }
 }
 
@@ -659,6 +661,57 @@ window.__debug = {
     return { msPerFrame: Math.round(ms * 100) / 100, fpsEquivalent: Math.round(1000 / ms), size: [innerWidth, innerHeight, devicePixelRatio], ...renderer.info.render };
   },
   pixelRatio: () => renderer.getPixelRatio(),
+  autosolve: (i: number) => {
+    // Drive the real controller through the solver's move list (teleporting the goose to each spot).
+    startGame(i);
+    game.dismissMessage();
+    const def = game.def;
+    const sol = solve(structuredClone(game.stall), { maxStreak: 2, maxDepth: 40, changeBox: def.changeBox, shareBoard: def.shareBoard });
+    if (!sol) return { stall: def.id, error: 'no solution' };
+    const sc = def.scales[0].pos;
+    const goTo = (x: number, z: number) => {
+      game.goose.x = x;
+      game.goose.z = z;
+      game.goose.yaw = Math.PI;
+    };
+    const safe = () => game.vendors.every((v) => v.mode === 'asleep' || (v.mode === 'away' && v.t > 1));
+    let waited = 0;
+    for (const mv of sol.moves) {
+      if (game.message && game.message.ttl === undefined) game.dismissMessage();
+      if (game.message) game.message = null;
+      while (game.scale && !safe() && waited < 60 * 40 && /^grab/.test(mv) && game.stall.beak === null) {
+        step(STEP);
+        waited++;
+      }
+      const [verb, a, b] = mv.split(' ');
+      if (verb === 'grab' && (b === 'L' || b === 'R')) {
+        const p = panCenter(sc, b);
+        goTo(p.x, p.z + 1.0);
+        const it = game.stall.scales[0][b].find((x) => x.kind === a);
+        if (it) game.clickItem(it.id);
+      } else if (verb === 'grab' && b === 'supply') {
+        goTo(SUPPLY.x, SUPPLY.z + 0.9);
+        const it = game.stall.supply.find((x) => x.kind === a);
+        if (it) game.clickItem(it.id);
+      } else if (verb === 'drop' && (a === 'L' || a === 'R')) {
+        const p = panCenter(sc, a);
+        goTo(p.x, p.z + 1.0);
+        game.clickPan(0, a);
+      } else if (verb === 'drop') {
+        goTo(sc.x + (Math.random() - 0.5) * 3, 3.2);
+        game.interact();
+      } else if (verb === 'change') {
+        goTo(CHANGE_BOX.x, CHANGE_BOX.z + 0.9);
+        game.interact();
+      } else if (verb === 'share') {
+        const pl = SHARE_PLATES.find((p) => p.k === Number(a))!;
+        goTo(pl.x, pl.z);
+        game.interact();
+      }
+      step(STEP);
+    }
+    return { stall: def.id, moves: sol.moves.length, solvedX: game.solvedX, expected: def.scales[0].x, caught: game.caught, phase: game.phase, waitedFrames: waited };
+  },
   info: () => ({ draws: renderer.info.render.calls, tris: renderer.info.render.triangles, geos: renderer.info.memory.geometries }),
 };
 

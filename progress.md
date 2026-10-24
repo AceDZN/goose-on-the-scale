@@ -1,0 +1,17 @@
+# Progress — Goose on the Scale
+
+## 2026-10-24
+
+- Read COMMON.md, BUILD_HANDOFF.md, design-reset; scaffolded Vite 8 + TS 7 + three 0.186.1 on port 5179 (`strictPort`).
+- User asked mid-build for: a public GitHub repo (created **AceDZN/goose-on-the-scale**, commits pushed to `main`), rigged/animated characters (T-pose → Tripo rig → Tripo animation), and gameplay mockups from ChatGPT image generation to build against. All three done.
+- Pure rules (`rules.ts`, `vendor.ts`, `levels.ts`) + BFS solver. Finding from the solver: with long unbalanced streaks, physically-valid "guess and substitute" shortcuts exist (e.g. `x + 1` vs 5 when x = 4). Every real equivalent operation needs ≤ 2 unbalanced actions, so "safe solution" is defined as streak ≤ 2 and tested per stall (par: 7, 8, 9, 8, 13, 12, 27 actions). Tool stalls are proven unsolvable without their tool.
+- 4 mockups generated (stall-1 gameplay, caught, phone + seesaw, title) → HUD, card, phone layout and seesaw pose built to match.
+- Tripo: goose, vendor (T-pose), sack, jar generated (4/5 generations). Vendor and goose retopologized and auto-rigged; vendor got `sing_01`, `look_around`, `idle`, `angry_01` (exported with skeleton); goose AI walk prompt turned out humanoid-only, so goose neck bones are animated in code. Sack/jar reduced ~980k → ~6k triangles with a custom sloppy-simplify script.
+- Performance pass: 903 → ~240–320 draw calls (static batching, cached block geometry), adaptive pixel ratio.
+- Verified in a real browser: desktop + phone-landscape layouts, a full stall-1 solve → seesaw → perfect launch → 3 stars, the caught/reset flow, balloon/jar/two-vendor stalls render, bonus stamps (early, wrong-free path, golden feather).
+
+## Next / known gaps
+
+- Vendor has `clap` for celebrating; no `sit` clip (bonus nap uses `idle` + z bubble).
+- No human playtest yet; difficulty of stall 6 (two vendors) and stall 7 timing is unverified with kids.
+- Portrait phone is supported by CSS but landscape is the intended phone orientation.

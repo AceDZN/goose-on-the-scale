@@ -52,3 +52,8 @@ export function panSlot(i: number, n: number): { x: number; z: number } {
   const a = (idx / inRing) * Math.PI * 2 + (ring ? 0.5 : -Math.PI / 2);
   return { x: Math.cos(a) * r, z: Math.sin(a) * r };
 }
+
+/** Where supply block i sits on top of the crate (shared by the view and the controller). */
+export function supplySlot(i: number): { x: number; z: number } {
+  return { x: SUPPLY.x - 0.3 + (i % 3) * 0.3, z: SUPPLY.z - 0.15 + Math.floor(i / 3) * 0.3 };
+}

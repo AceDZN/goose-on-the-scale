@@ -58,6 +58,7 @@ import {
   panCenter,
   panSlot,
   stampPlates,
+  supplySlot,
   type Box,
   type Circle,
 } from './layout.ts';
@@ -560,8 +561,9 @@ export class Game {
         };
       }
     }
-    if (this.def.supply.length && s.supply.length && this.distTo(SUPPLY) < 1.15) {
-      const it = s.supply[s.supply.length - 1];
+    const sup = this.pickSupply();
+    if (sup) {
+      const it = sup;
       return { verb: `לקחת ${kindName(it.kind)} מארגז המשקולות`, kind: 'grab', run: () => this.apply(grab(s, { at: 'supply' }, it.id), 'grab_supply', { kind: it.kind }) };
     }
     let near: Item | null = null;
@@ -579,6 +581,23 @@ export class Game {
       return { verb: `לקחת ${kindName(it.kind, it)} מהרצפה`, kind: 'grab', run: () => this.apply(grab(s, { at: 'ground' }, it.id), 'grab_ground', { kind: it.kind }) };
     }
     return null;
+  }
+
+  /** The supply block nearest the beak, when standing at the crate. */
+  pickSupply(): Item | null {
+    if (!this.def.supply.length || !this.stall.supply.length || this.distTo(SUPPLY) >= 1.15 || this.stall.beak) return null;
+    const bp = this.beakPos();
+    let best: Item | null = null;
+    let bd = Infinity;
+    this.stall.supply.forEach((it, i) => {
+      const p = supplySlot(i);
+      const d = Math.hypot(p.x - bp.x, p.z - bp.z);
+      if (d < bd) {
+        bd = d;
+        best = it;
+      }
+    });
+    return best;
   }
 
   /** The item on a pan nearest to the goose's beak — mirrors the view's slot layout. */
@@ -629,6 +648,8 @@ export class Game {
     }
     const g = s.ground.find((i) => i.id === id);
     if (g?.pos && this.distTo(g.pos) < 1.4) this.apply(grab(s, { at: 'ground' }, id), 'grab_ground', { kind: g.kind });
+    const sup = s.supply.find((i) => i.id === id);
+    if (sup && this.distTo(SUPPLY) < 1.6) this.apply(grab(s, { at: 'supply' }, id), 'grab_supply', { kind: sup.kind });
   }
 
   clickPan(scale: number, side: Side) {
