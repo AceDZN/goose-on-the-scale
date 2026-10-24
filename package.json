@@ -7,7 +7,8 @@
     "dev": "vite --host 0.0.0.0 --port 5179 --strictPort",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 0.0.0.0 --port 5179 --strictPort",
-    "test": "tsx --test tests/*.test.ts"
+    "test": "tsx --test tests/*.test.ts",
+    "capture": "node tests/browser-capture.mjs"
   },
   "dependencies": {
     "@fontsource/rubik": "5.2.8",
@@ -17,6 +18,7 @@
     "@gltf-transform/cli": "4.5.1",
     "@types/node": "24.19.2",
     "@types/three": "0.183.1",
+    "playwright": "1.64.1",
     "tsx": "4.23.15",
     "typescript": "7.0.2",
     "vite": "8.3.5"

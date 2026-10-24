@@ -14,7 +14,10 @@ npm install
 npm run dev        # http://localhost:5179
 npm test           # rules, solver and vendor tests (node:test via tsx)
 npm run build      # static build in dist/ (relative base, works offline)
+npm run capture    # with the dev server running: real-Chrome smoke run + screenshots in docs/screenshots/
 ```
+
+![Stall 1](docs/screenshots/02-stall1-gameplay.jpg)
 
 URL flags: `?stall=3` start at a stall, `?all` unlock every stall in the menus, `?touch` force the touch layout, `?debug` include hidden values in `render_game_to_text()`, `?test` don't auto-pause when the tab is hidden.
 

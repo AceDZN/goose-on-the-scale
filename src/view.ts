@@ -355,6 +355,14 @@ export class View {
 
   private syncGoose(game: Game, dt: number) {
     const g = game.goose;
+    if (this.titleMode) {
+      // title hero shot: the goose poses proudly in front of the scale (mockup 4)
+      const sc = game.def.scales[0].pos;
+      this.goose.position.set(sc.x - 0.9, 0, sc.z + 1.5);
+      this.goose.rotation.set(0, 0.35 + Math.sin(this.time * 0.8) * 0.15, 0);
+      this.gooseBody.position.y = Math.abs(Math.sin(this.time * 2.2)) * 0.03;
+      return;
+    }
     const target = new THREE.Vector3(g.x, g.y, g.z);
     // standing on the seesaw's lowered goose end
     if (this.seesaw && game.phase === 'solved' && Math.hypot(g.x - SEESAW.gooseEnd.x, g.z - SEESAW.gooseEnd.z) < 0.5) target.y += 0.52;

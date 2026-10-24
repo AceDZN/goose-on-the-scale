@@ -48,7 +48,7 @@ function prepare(root: THREE.Object3D) {
 export async function loadModels(onProgress?: (done: number, total: number) => void): Promise<LoadedModels> {
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);
-  const files = ['goose.glb', 'vendor.glb', 'vendor-anims.glb', 'sack.glb', 'jar.glb'];
+  const files = ['goose.glb', 'vendor.glb', 'sack.glb', 'jar.glb'];
   let done = 0;
   const results = await Promise.all(
     files.map((f) =>
@@ -58,8 +58,8 @@ export async function loadModels(onProgress?: (done: number, total: number) => v
       }),
     ),
   );
-  const [goose, vendor, vendorAnims, sack, jar] = results;
-  const vendorClips = [...(vendor?.animations ?? []), ...(vendorAnims?.animations ?? [])];
+  const [goose, vendor, sack, jar] = results;
+  const vendorClips = vendor?.animations ?? [];
   return {
     goose: goose ? prepare(goose.scene) : null,
     gooseClips: goose?.animations ?? [],
