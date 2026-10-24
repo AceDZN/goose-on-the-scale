@@ -185,12 +185,6 @@ export function buildEnvironment(def: StallDef): Environment {
   g.add(val);
   for (const x of [-4.9, 4.9]) g.add(shadowy(box(0.12, 3.6, 0.12, darkWood(), x, 1.8, -2.2)));
 
-  // side awning above the jump wall area
-  const aw2 = new THREE.Mesh(new THREE.PlaneGeometry(3, 2.4), new THREE.MeshStandardMaterial({ map: stripeTexture(def.awning[1], def.awning[0], 8), side: THREE.DoubleSide }));
-  aw2.position.set(-6.4, 3.0, 1.5);
-  aw2.rotation.set(-Math.PI / 2 + 0.3, 0, Math.PI / 2);
-  g.add(aw2);
-
   // string lights
   const glow = new THREE.SpriteMaterial({ map: glowTexture(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending });
   const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffe2a0 });
@@ -461,10 +455,10 @@ export interface ItemModels {
 }
 
 const blockSize: Record<number, { r: number; h: number }> = {
-  1: { r: 0.1, h: 0.15 },
-  2: { r: 0.13, h: 0.19 },
-  5: { r: 0.17, h: 0.25 },
-  10: { r: 0.215, h: 0.31 },
+  1: { r: 0.13, h: 0.19 },
+  2: { r: 0.16, h: 0.23 },
+  5: { r: 0.2, h: 0.29 },
+  10: { r: 0.24, h: 0.34 },
 };
 
 const labelCache = new Map<number, THREE.MeshBasicMaterial>();

@@ -195,7 +195,7 @@ export class Game {
     this.snapshot = structuredClone(this.stall);
     this.vcfgs = this.def.vendors.map((_, vi) => vendorConfig(this.def, vi));
     this.vendors = this.vcfgs.map(initVendor);
-    this.goose = { x: START.x, z: START.z, yaw: Math.PI * 0.75, y: 0, vy: 0, moving: false, stun: 0, flapT: 0, honkT: 0 };
+    this.goose = { x: START.x, z: START.z, yaw: Math.PI, y: 0, vy: 0, moving: false, stun: 0, flapT: 0, honkT: 0 };
     this.phase = 'intro';
     this.honkCd = 0;
     this.hintOn = this.stallIndex === 0;

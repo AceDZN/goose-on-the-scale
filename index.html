@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#1f5a55" />
+    <title>אווז על המאזניים</title>
+    <meta name="description" content="משחק התגנבות תלת־ממדי במשוואות: אווז שובב, שוק ירושלמי, ומאזניים שהם משוואה." />
+  </head>
+  <body>
+    <canvas id="game" aria-label="אווז על המאזניים — סצנת המשחק"></canvas>
+
+    <div id="hud" class="hidden" aria-live="polite">
+      <div class="hud-btns">
+        <button class="round" id="btn-pause" aria-label="השהיה"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg></button>
+        <button class="round" id="btn-sound" aria-label="צלילים"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <button class="round" id="btn-hint" aria-label="שלט גיר (רמז)" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.5.9 1.1.9 1.8V17h5.4v-1.4c0-.7.3-1.3.9-1.8A6 6 0 0 0 12 3z"/><rect x="9.3" y="18" width="5.4" height="2.4" rx="1"/></svg></button>
+      </div>
+
+      <div id="meters"></div>
+      <div id="toast" class="toast hidden"></div>
+
+      <div class="stall-card" id="stall-card">
+        <div class="stall-title" id="stall-title"></div>
+        <div class="stars" id="stars"><span class="star"></span><span class="star"></span><span class="star"></span></div>
+      </div>
+
+      <button class="honk" id="btn-honk" aria-label="גהגה (Q)">
+        <span class="ring" id="honk-ring"></span>
+        <svg viewBox="0 0 64 64" class="goose-ico"><path d="M22 52c-6-3-8-10-6-17 2-8 4-14 4-20 0-6 4-10 10-10s9 4 9 8c0 3-1 5-3 6l-3 1c-2 1-2 3-1 5 3 6 6 12 4 19-1 5-6 9-14 8z" fill="#fff"/><path d="M38 11l14 3-13 5z" fill="#f08a1c"/><circle cx="33" cy="11" r="2" fill="#1d2b2a"/><path d="M50 22l7-3M51 27h8M50 32l7 3" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+        <span class="honk-label">גהגה!</span>
+        <span class="honk-ok hidden" id="honk-ok" title="צפצוף מכאן יסיח את המוכר">✓</span>
+      </button>
+
+      <div class="bottom-center">
+        <div class="prompt hidden" id="prompt"><kbd>E</kbd><span id="prompt-text"></span></div>
+        <div class="beak-pill" id="beak-pill"><svg viewBox="0 0 32 20" class="beak-ico"><path d="M2 10 Q10 1 30 9 Q12 19 2 10z" fill="#f08a1c" stroke="#a5520c" stroke-width="1.2"/></svg><span id="beak-text">במקור: ריק</span></div>
+      </div>
+
+      <div class="objective" id="objective"><svg viewBox="0 0 24 24" class="target"><circle cx="12" cy="12" r="9" fill="none" stroke-width="2.2"/><circle cx="12" cy="12" r="5" fill="none" stroke-width="2.2"/><circle cx="12" cy="12" r="1.6"/></svg><span id="objective-text"></span></div>
+
+      <div class="load-pill hidden" id="load-pill"></div>
+
+      <div id="touch" class="hidden">
+        <div class="joy" id="joy"><div class="knob" id="knob"></div></div>
+        <div class="touch-btns">
+          <button class="t-flap" id="t-flap" aria-label="קפיצה"><svg viewBox="0 0 32 32"><path d="M4 22c6 0 12-4 16-10 2 4 6 6 10 6-4 4-10 7-16 7-4 0-8-1-10-3z" fill="#fff"/></svg><span>קפיצה</span></button>
+          <button class="t-act" id="t-act" aria-label="קח / הנח"><svg viewBox="0 0 32 32"><path d="M6 14l10-5 10 5v11l-10 5-10-5z" fill="none" stroke="#fff" stroke-width="2"/><path d="M16 2v10M12 8l4 4 4-4" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg><span>קח / הנח</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="card" class="card hidden" role="dialog" aria-modal="false">
+      <div class="card-title" id="card-title"></div>
+      <div class="card-body" id="card-body"></div>
+      <button class="btn teal" id="card-btn"></button>
+    </div>
+
+    <div id="title" class="screen title-screen">
+      <div class="title-top">
+        <button class="round" id="title-sound" aria-label="צלילים"><svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke-width="2" stroke-linecap="round"/></svg></button>
+        <button class="round" id="title-settings" aria-label="הגדרות"><svg viewBox="0 0 24 24"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm9 4.5-2.2.6-.6 1.5 1.1 2-1.9 1.9-2-1.1-1.5.6L13 21h-2l-.6-2.2-1.5-.6-2 1.1L5 17.4l1.1-2-.6-1.5L3 13v-2l2.2-.6.6-1.5-1.1-2L6.6 5l2 1.1 1.5-.6L11 3h2l.6 2.2 1.5.6 2-1.1L19 6.6l-1.1 2 .6 1.5L21 11z"/></svg></button>
+      </div>
+      <div class="logo-block">
+        <h1 class="logo"><span class="logo-scale">⚖</span><span>אווז על</span><span>המאזניים</span></h1>
+        <div class="subtitle">משחק התגנבות במשוואות</div>
+        <button class="btn teal big" id="btn-play"><svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg><span>שחקו</span></button>
+        <button class="btn cream" id="btn-select"><span>בחירת דוכן</span></button>
+        <button class="btn cream" id="btn-how"><span>איך משחקים?</span></button>
+      </div>
+      <div class="medals" id="medals"></div>
+      <div class="keys">
+        <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>תנועה</span></div>
+        <div><kbd>E</kbd><span>קח / הנח</span></div>
+        <div><kbd>Q</kbd><span>גהגה</span></div>
+        <div><kbd>רווח</kbd><span>קפיצה</span></div>
+      </div>
+      <div class="loading" id="loading">טוען את השוק…</div>
+    </div>
+
+    <div id="overlay" class="screen panel-screen hidden">
+      <div class="panel" id="panel"></div>
+    </div>
+
+    <div id="glerror" class="screen hidden"><div class="panel"><h2>הגרפיקה נעצרה</h2><p>הדפדפן איבד את הקשר ל־WebGL. רעננו את העמוד כדי להמשיך.</p><button class="btn teal" onclick="location.reload()">רענון</button></div></div>
+
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>

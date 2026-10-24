@@ -7,7 +7,7 @@ export const PAN_RADIUS = 0.72;
 export const PAN_REACH = 1.35;
 export const GOOSE_RADIUS = 0.32;
 export const GOOSE_SPEED = 3.6;
-export const START = { x: -5.4, z: 3.4 };
+export const START = { x: -0.6, z: 3.9 };
 
 export const COUNTER = { minX: -3.4, maxX: 3.4, minZ: -2.65, maxZ: -2.05 };
 export const SHELVES = { minX: -6, maxX: 6, minZ: -5.6, maxZ: -5.0 };
@@ -48,7 +48,7 @@ export function panSlot(i: number, n: number): { x: number; z: number } {
   const ring = i < 6 ? 0 : 1;
   const inRing = ring === 0 ? Math.min(n, 6) : n - 6;
   const idx = ring === 0 ? i : i - 6;
-  const r = ring === 0 ? (n === 2 ? 0.24 : 0.36) : 0.14;
+  const r = ring === 0 ? (n === 2 ? 0.26 : 0.42) : 0.12;
   const a = (idx / inRing) * Math.PI * 2 + (ring ? 0.5 : -Math.PI / 2);
   return { x: Math.cos(a) * r, z: Math.sin(a) * r };
 }

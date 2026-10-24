@@ -41,7 +41,7 @@ export interface StallDef {
 }
 
 const SCALE_C = { x: 0, z: -0.6 };
-const VENDOR_C = { x: 0, z: -3.2 };
+const VENDOR_C = { x: -1.9, z: -3.2 };
 
 const cycle = (away: number[], offset = 0, pos = VENDOR_C, scale = 0, tint = 0xffffff): VendorDef => ({
   away,

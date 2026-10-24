@@ -41,8 +41,8 @@ export function paverTexture(): THREE.CanvasTexture {
     let x = -r() * 80;
     while (x < 1024) {
       const w = 110 + r() * 120;
-      const tone = 190 + r() * 40;
-      g.fillStyle = `rgb(${tone + 22}, ${tone - 2}, ${tone - 48})`;
+      const tone = 150 + r() * 38;
+      g.fillStyle = `rgb(${tone + 30}, ${tone - 2}, ${tone - 52})`;
       const pad = 5;
       roundRect(g, x + pad, y + pad, w - pad * 2, h - pad * 2, 14);
       g.fill();
@@ -77,8 +77,8 @@ export function wallTexture(): THREE.CanvasTexture {
     let x = row % 2 ? -110 : 0;
     while (x < 1024) {
       const w = 180 + r() * 90;
-      const tone = 196 + r() * 36;
-      g.fillStyle = `rgb(${tone + 20}, ${tone - 4}, ${tone - 46})`;
+      const tone = 176 + r() * 36;
+      g.fillStyle = `rgb(${tone + 26}, ${tone - 4}, ${tone - 52})`;
       roundRect(g, x + 6, row * rowH + 6, w - 12, rowH - 12, 18);
       g.fill();
       for (let i = 0; i < 60; i++) {
