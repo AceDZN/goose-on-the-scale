@@ -45,7 +45,10 @@ test('every stall leaves away windows long enough for a safe pair of moves', () 
 });
 
 test('a honk from behind the vendor pulls their eyes off the scale', () => {
-  const behind = { x: melon.pos.x + 2.5, z: melon.pos.z - 1 };
+  const dx = melon.scalePos.x - melon.pos.x;
+  const dz = melon.scalePos.z - melon.pos.z;
+  const l = Math.hypot(dx, dz);
+  const behind = { x: melon.pos.x - (dx / l) * 1.5 + 0.4, z: melon.pos.z - (dz / l) * 1.5 };
   assert.ok(honkDistracts(melon, behind));
   const looking: VendorState = { mode: 'looking', t: 2, idx: 0 };
   const r = honkVendor(looking, melon, behind);
