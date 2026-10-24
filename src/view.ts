@@ -175,6 +175,11 @@ export class View {
     this.stallGroup.clear();
     for (const o of this.items.values()) o.removeFromParent();
     this.items.clear();
+    for (const d of this.dying) d.obj.removeFromParent();
+    this.dying = [];
+    for (const p of this.particles) p.obj.removeFromParent();
+    this.particles = [];
+    this.shake = 0;
     for (const v of this.vendors) v.root.removeFromParent();
     this.vendors = [];
     this.scales = [];

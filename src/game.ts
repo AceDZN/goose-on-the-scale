@@ -27,7 +27,7 @@ import {
   type StallState,
   type Verdict,
 } from './rules.ts';
-import { STALLS, buildStall, vendorConfig, type StallDef } from './levels.ts';
+import { STALLS, buildStall, variantsFor, vendorConfig, type StallDef } from './levels.ts';
 import {
   HONK_COOLDOWN,
   celebrate,
@@ -189,10 +189,26 @@ export class Game {
     this.onLog?.(e);
   }
 
-  loadStall(i: number) {
+  /** Which exercise of the current stall is loaded, and how many exist. */
+  exercise = 0;
+  exerciseCount = 1;
+  /** Last exercise played per stall, so a reload never repeats it. */
+  lastExercise: Record<string, number> = {};
+  /** Random source for picking exercises (tests can replace it). */
+  random: () => number = Math.random;
+
+  /** Load a stall. `exercise` picks a specific exercise; otherwise a random one different from the last. */
+  loadStall(i: number, exercise?: number) {
     this.stallIndex = Math.max(0, Math.min(STALLS.length - 1, i));
     this.def = STALLS[this.stallIndex];
-    this.stall = buildStall(this.def);
+    const variants = variantsFor(this.def);
+    this.exerciseCount = variants.length;
+    const last = this.lastExercise[this.def.id];
+    let ex = exercise ?? Math.floor(this.random() * variants.length);
+    if (exercise === undefined && variants.length > 1 && ex === last) ex = (ex + 1 + Math.floor(this.random() * (variants.length - 1))) % variants.length;
+    this.exercise = Math.max(0, Math.min(variants.length - 1, ex));
+    this.lastExercise[this.def.id] = this.exercise;
+    this.stall = buildStall(this.def, variants[this.exercise]);
     this.snapshot = structuredClone(this.stall);
     this.vcfgs = this.def.vendors.map((_, vi) => vendorConfig(this.def, vi));
     this.vendors = this.vcfgs.map(initVendor);
@@ -212,19 +228,30 @@ export class Game {
     this.message = {
       kind: 'intro',
       title: `דוכן ${this.def.num} · ${this.def.title}`,
-      body: [this.def.intro],
+      body: [this.def.intro, `תרגיל ${this.exercise + 1} מתוך ${this.exerciseCount} בדוכן הזה`],
       button: 'יאללה!',
     };
     this.buildObstacles();
     this.emit('stallLoaded', { index: this.stallIndex });
-    this.record('stall_start', { equation: this.def.scales.map((s) => equationString(this.stall.scales[this.def.scales.indexOf(s)])) });
+    this.record('stall_start', {
+      exercise: this.exercise, equation: this.def.scales.map((s) => equationString(this.stall.scales[this.def.scales.indexOf(s)])) });
   }
 
+  /** Try again: same stall, same exercise. */
   restartStall() {
     this.record('restart');
-    this.loadStall(this.stallIndex);
+    this.loadStall(this.stallIndex, this.exercise);
     this.message = null;
     this.phase = 'play';
+  }
+
+  /** "תרגיל חדש בדוכן הזה": same stall and difficulty, a different exercise. */
+  newExercise() {
+    this.record('new_exercise');
+    this.loadStall(this.stallIndex);
+    this.message = { kind: 'info', title: `תרגיל ${this.exercise + 1} מתוך ${this.exerciseCount}`, body: [this.def.intro], ttl: 3.2 };
+    this.phase = 'play';
+    this.emit('play');
   }
 
   private buildObstacles() {
@@ -922,6 +949,7 @@ export class Game {
     return {
       stall: this.def.id,
       stallNumber: this.def.num,
+      exercise: `${this.exercise + 1}/${this.exerciseCount}`,
       phase: this.phase,
       objective: this.objective(),
       coords: 'stall-local metres: x right, z toward camera, vendor at z≈-3.2',

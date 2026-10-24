@@ -294,6 +294,11 @@ kbd {
   font: 800 1.25rem 'Rubik', sans-serif;
   white-space: nowrap;
 }
+.stall-title .ex {
+  display: block;
+  font: 700 0.8rem 'Rubik', sans-serif;
+  color: var(--teal);
+}
 .stars {
   display: flex;
   justify-content: center;

@@ -25,6 +25,8 @@ interface Progress {
   stars: Record<string, number>;
   unlocked: number;
   feathers: number;
+  /** Exercise numbers solved per stall. */
+  solved?: Record<string, number[]>;
 }
 
 function readJSON<T>(key: string, fallback: T): T {
@@ -281,6 +283,10 @@ function onEvents(events: GameEvent[]) {
 
 function saveProgress() {
   for (const [k, v] of Object.entries(game.stars)) progress.stars[k] = Math.max(progress.stars[k] ?? 0, v);
+  progress.solved ??= {};
+  const done = new Set(progress.solved[game.def.id] ?? []);
+  done.add(game.exercise);
+  progress.solved[game.def.id] = [...done].sort((a, b) => a - b);
   progress.unlocked = Math.max(progress.unlocked, Math.min(STALLS.length, game.stallIndex + 2));
   writeJSON(PROGRESS_KEY, progress);
   renderMedals();
@@ -323,7 +329,11 @@ function updateHud() {
     (el.querySelector('.fill') as HTMLElement).style.width = `${Math.max(0, frac) * 100}%`;
   });
 
-  $('stall-title').textContent = `דוכן ${game.def.num} • ${game.def.title}`;
+  const titleText = `דוכן ${game.def.num} • ${game.def.title}`;
+  if ($('stall-title').dataset.t !== titleText + game.exercise) {
+    $('stall-title').dataset.t = titleText + game.exercise;
+    $('stall-title').innerHTML = `${titleText}<span class="ex">תרגיל <bdi dir="ltr">${game.exercise + 1}/${game.exerciseCount}</bdi></span>`;
+  }
   const starEls = $('stars').children;
   const solved = game.solvedX !== null || game.phase === 'stallDone';
   const earned = game.stars[game.def.id] ?? 0;
@@ -443,7 +453,7 @@ function wireUi() {
 
 let downAt: { x: number; y: number; t: number } | null = null;
 
-function startGame(index: number) {
+function startGame(index: number, exercise?: number) {
   initAudio();
   started = true;
   paused = false;
@@ -452,7 +462,18 @@ function startGame(index: number) {
   $('overlay').classList.add('hidden');
   $('hud').classList.remove('hidden');
   $('touch').classList.toggle('hidden', !isTouch);
-  game.loadStall(index);
+  // ?test keeps runs reproducible (exercise 1) unless a specific one is asked for
+  game.loadStall(index, exercise ?? (params.has('test') ? Number(params.get('ex') ?? 1) - 1 : undefined));
+  view.loadStall(game);
+  canvas.focus();
+}
+
+function newExercise() {
+  initAudio();
+  started = true;
+  paused = false;
+  $('overlay').classList.add('hidden');
+  game.newExercise();
   view.loadStall(game);
   canvas.focus();
 }
@@ -507,7 +528,7 @@ function showSettings(inGame: boolean) {
     <label class="toggle">תנועה מופחתת <input type="checkbox" id="opt-motion" ${settings.reducedMotion ? 'checked' : ''}></label>
     ${inGame && game.def.hint ? `<label class="toggle">שלט גיר (רמז) <input type="checkbox" id="opt-hint" ${game.hintOn ? 'checked' : ''}></label>` : ''}
     <div class="col">
-      ${inGame ? '<button class="btn teal" id="p-resume">המשך</button><button class="btn cream" id="p-restart">התחלת הדוכן מחדש</button><button class="btn cream" id="p-select">בחירת דוכן</button><button class="btn cream" id="p-title">למסך הפתיחה</button>' : '<button class="btn teal" id="p-close">סגירה</button>'}
+      ${inGame ? '<button class="btn teal" id="p-resume">המשך</button><button class="btn cream" id="p-new">תרגיל חדש בדוכן הזה</button><button class="btn cream" id="p-restart">אותו תרגיל מההתחלה</button><button class="btn cream" id="p-select">בחירת דוכן</button><button class="btn cream" id="p-title">למסך הפתיחה</button>' : '<button class="btn teal" id="p-close">סגירה</button>'}
     </div>`);
   $('opt-sound').addEventListener('change', () => toggleMute());
   $('opt-motion').addEventListener('change', (e) => {
@@ -517,6 +538,7 @@ function showSettings(inGame: boolean) {
   });
   document.getElementById('opt-hint')?.addEventListener('change', () => toggleHint());
   document.getElementById('p-resume')?.addEventListener('click', () => togglePause(false));
+  document.getElementById('p-new')?.addEventListener('click', () => newExercise());
   document.getElementById('p-restart')?.addEventListener('click', () => {
     game.restartStall();
     togglePause(false);
@@ -584,10 +606,11 @@ function showStallDone(stars: number) {
     panel(`<h2>${game.def.title} — עברתם!</h2>
       <div class="result-stars">${labels.map((l, i) => `<figure><span class="star ${got[i] ? 'on' : ''}"></span>${l}</figure>`).join('')}</div>
       <p>${stars} מתוך 3 כוכבים</p><p class="big-x"><bdi dir="ltr">x = ${game.solvedX}</bdi></p>
+      <p>תרגילים שפתרתם בדוכן הזה: <bdi dir="ltr">${(progress.solved?.[game.def.id] ?? []).length} / ${game.exerciseCount}</bdi></p>
       ${last ? '<p><b>סיימתם את כל הדוכנים בשוק!</b> נשאר רק בונוס אחד מכושף…</p>' : ''}
-      <div class="col"><button class="btn teal" id="next">${last ? 'לבונוס: המאזניים המכושפים' : 'לדוכן הבא'}</button><button class="btn cream" id="again">לשחק שוב בדוכן</button></div>`);
+      <div class="col"><button class="btn teal" id="next">${last ? 'לבונוס: המאזניים המכושפים' : 'לדוכן הבא'}</button><button class="btn cream" id="again">תרגיל חדש בדוכן הזה</button></div>`);
     $('next').addEventListener('click', () => startGame(game.stallIndex + 1));
-    $('again').addEventListener('click', () => startGame(game.stallIndex));
+    $('again').addEventListener('click', () => newExercise());
   }, 600);
 }
 
@@ -596,8 +619,9 @@ function showFinale() {
   panel(`<h2>השוק כולו שלכם!</h2>
     <p>⭐ <bdi dir="ltr">${total} / 21</bdi> כוכבים · 🪶 <bdi dir="ltr">${game.feathers} / 2</bdi> נוצות זהב</p>
     <p>גיליתם את המשקל של כל השקים בשוק — בלי לשבור את האיזון. ובמאזניים המכושפים ראיתם שלא לכל משוואה יש פתרון יחיד.</p>
-    <div class="col"><button class="btn teal" id="fin-title">למסך הפתיחה</button><button class="btn cream" id="fin-select">בחירת דוכן</button></div>`);
+    <div class="col"><button class="btn teal" id="fin-title">למסך הפתיחה</button><button class="btn cream" id="fin-new">מאזניים מכושפים חדשים</button><button class="btn cream" id="fin-select">בחירת דוכן</button></div>`);
   $('fin-title').addEventListener('click', () => goTitle());
+  $('fin-new').addEventListener('click', () => newExercise());
   $('fin-select').addEventListener('click', () => showSelect());
 }
 
@@ -617,7 +641,7 @@ declare global {
     render_game_to_text: () => string;
     advanceTime: (ms: number) => void;
     __game: () => Game;
-    __debug: { autosolve: (i: number) => unknown; bench: (n?: number) => unknown; pixelRatio: () => number; fps: () => number; start: (i: number) => void; act: (a: string) => void; move: (x: number, z: number, ms: number) => void; info: () => unknown };
+    __debug: { autosolve: (i: number, ex?: number) => unknown; bench: (n?: number) => unknown; pixelRatio: () => number; fps: () => number; start: (i: number, ex?: number) => void; act: (a: string) => void; move: (x: number, z: number, ms: number) => void; info: () => unknown };
   }
 }
 
@@ -631,7 +655,7 @@ window.advanceTime = (ms: number) => {
 window.__game = () => game;
 window.__debug = {
   fps: () => fps,
-  start: (i: number) => startGame(i),
+  start: (i: number, ex?: number) => startGame(i, ex),
   act: (a: string) => handleAction(a),
   move: (x: number, z: number, ms: number) => {
     // world-space walk for automated tests
@@ -661,9 +685,9 @@ window.__debug = {
     return { msPerFrame: Math.round(ms * 100) / 100, fpsEquivalent: Math.round(1000 / ms), size: [innerWidth, innerHeight, devicePixelRatio], ...renderer.info.render };
   },
   pixelRatio: () => renderer.getPixelRatio(),
-  autosolve: (i: number) => {
+  autosolve: (i: number, ex?: number) => {
     // Drive the real controller through the solver's move list (teleporting the goose to each spot).
-    startGame(i);
+    startGame(i, ex ?? 0);
     game.dismissMessage();
     const def = game.def;
     const sol = solve(structuredClone(game.stall), { maxStreak: 2, maxDepth: 40, changeBox: def.changeBox, shareBoard: def.shareBoard });
@@ -710,7 +734,7 @@ window.__debug = {
       }
       step(STEP);
     }
-    return { stall: def.id, moves: sol.moves.length, solvedX: game.solvedX, expected: def.scales[0].x, caught: game.caught, phase: game.phase, waitedFrames: waited };
+    return { stall: def.id, moves: sol.moves.length, solvedX: game.solvedX, expected: game.stall.scales[0].x, exercise: game.exercise, caught: game.caught, phase: game.phase, waitedFrames: waited };
   },
   info: () => ({ draws: renderer.info.render.calls, tris: renderer.info.render.triangles, geos: renderer.info.memory.geometries }),
 };

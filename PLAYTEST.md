@@ -14,6 +14,11 @@ Date: 2026-10-24. Tester: the builder (automation + screenshots). **No child or 
   - vendor: the warning never catches, honk from behind distracts, honk from the scale side starts the turn, two offset vendors leave a ≥ 2.5 s shared window.
 - In-browser **autosolve** (`window.__debug.autosolve(i)`) drives the real game controller through the solver's moves on every stall (goose teleported to each spot): all 7 stalls reached `phase: solved` with the correct `x` (4, 4, 3, 6, 4, 6, 5) and 0 catches. The first run of stall 7 failed and exposed a real bug: E at the supply crate always handed over the last block (a 2 kg), so a player couldn't pick a 1 kg block to tie to a balloon. Fixed (E takes the block nearest the beak; supply blocks are clickable) and re-verified.
 
+## Exercises (added 2026-10-25)
+
+- `tests/variants.test.ts` (7 tests): every stall has 5 exercises with distinct equations; each balances only at its own `x` (0–25 checked) and fits on the pans; each generated exercise replays its stored safe solution through the rules to the right `x` with ≤ 2 unbalanced actions in a row; the stall's tool is still required (solver without it finds nothing); the seesaw is always loadable; bonus exercises always hold one identity and one contradiction; reloading never repeats the last exercise, restart keeps it, "new exercise" changes it. Total: 29 tests pass.
+- Real Chrome (Playwright): all 35 playable exercises autosolved through the game controller to the correct `x`; the pause menu's "תרגיל חדש בדוכן הזה" switched exercise and the card/toast showed the new number; 0 console errors. A bug found there (confetti and a taken sack from the previous exercise lingering after a switch) was fixed.
+
 ## In a real browser (built-in browser pane, the user's Chrome, and headless Chrome via Playwright)
 
 - `npm run capture` (headless system Chrome, Playwright 1.64.1) replays the key moments and writes `docs/screenshots/*.jpg`: title, stall-1 gameplay, caught, seesaw, launch, stalls 2/5/6/7, bonus, phone landscape. Last run: **0 console errors**, autosolve of stalls 1–6 correct.

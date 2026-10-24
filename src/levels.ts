@@ -1,6 +1,8 @@
 // Authored stalls. Pure data + a builder for the initial rules state.
 import type { Item, Kind, StallState } from './rules.ts';
 import type { VendorConfig } from './vendor.ts';
+import type { Variant } from './generator.ts';
+import { GENERATED } from './variants.ts';
 
 export interface ScaleDef {
   x: number;
@@ -78,7 +80,7 @@ export const STALLS: StallDef[] = [
     num: 2,
     title: 'דוכן הרימונים',
     tagline: '2x + 1 = 9',
-    intro: 'שני שקים זהים. אין כאן משקולת של 1 בצד ימין… קופת העודף פורטת משקולת לקטנות בלי לשנות את המשקל.',
+    intro: 'שני שקים זהים. חסרה משקולת קטנה בצד השני? קופת העודף פורטת משקולת לקטנות בלי לשנות את המשקל.',
     unknown: 'sack',
     scales: [{ x: 4, L: ['sack', 'sack', 'w1'], R: ['w5', 'w2', 'w2'], pos: SCALE_C }],
     vendors: [cycle([6.5, 5.5, 7])],
@@ -114,7 +116,7 @@ export const STALLS: StallDef[] = [
     num: 4,
     title: 'דוכן הפיצוחים',
     tagline: '2x + 5 = 17',
-    intro: 'משקולת של 10 ק״ג לא מתחלקת לשתי קבוצות של 6… אבל אפשר לפרוט אותה.',
+    intro: 'משקולת של 10 ק״ג לא תמיד מתחלקת לקבוצות שוות… אבל אפשר לפרוט אותה.',
     unknown: 'sack',
     scales: [{ x: 6, L: ['sack', 'sack', 'w5'], R: ['w10', 'w5', 'w1', 'w1'], pos: SCALE_C }],
     vendors: [cycle([5.5, 6.5, 5])],
@@ -212,11 +214,24 @@ export const STALLS: StallDef[] = [
   },
 ];
 
-export function buildStall(def: StallDef): StallState {
+/** Stalls whose tool must be needed in every exercise (checked by the generator and tests). */
+export const NEEDS_CHANGE = ['two-sacks', 'change-box'];
+export const NEEDS_SHARE = ['two-sacks', 'both-pans', 'change-box', 'balloons', 'two-vendors'];
+
+export function authoredVariant(def: StallDef): Variant {
+  return { scales: def.scales.map((s) => ({ x: s.x, L: [...s.L], R: [...s.R] })), supply: [...def.supply], moves: [] };
+}
+
+/** Exercise 1 is the authored one; the rest are generated and verified offline. */
+export function variantsFor(def: StallDef): Variant[] {
+  return [authoredVariant(def), ...(GENERATED[def.id] ?? [])];
+}
+
+export function buildStall(def: StallDef, variant: Variant = authoredVariant(def)): StallState {
   let nextId = 1;
   const mk = (kind: Kind): Item => ({ id: nextId++, kind });
-  const scales = def.scales.map((sc) => ({ x: sc.x, L: sc.L.map(mk), R: sc.R.map(mk) }));
-  const supply = def.supply.map(mk);
+  const scales = variant.scales.map((sc) => ({ x: sc.x, L: sc.L.map(mk), R: sc.R.map(mk) }));
+  const supply = variant.supply.map(mk);
   return { scales, ground: [], supply, sky: [], seesaw: [], beak: null, nextId };
 }
 

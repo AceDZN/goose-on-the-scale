@@ -2,7 +2,8 @@
 
 A comic 3D stealth puzzle for Hebrew-speaking grade-8 students. A mischievous goose sneaks around a Jerusalem-style shuk where every stall's brass two-pan scale **is a linear equation**: identical sacks are the unknown `x`, iron blocks are numbers, helium balloons are −1. Tip a scale while the vendor is watching and you get shooed back to the last balanced state. The only safe way to mess with a scale is to do the same thing to both pans, fast, while the vendor's back is turned. Leave one sack alone against plain weights and you've found `x`; then load the seesaw with exactly the weight of n sacks and catapult over the wall to the next stall.
 
-- 7 stalls + a bonus (no solution / infinitely many solutions), about 6–10 minutes.
+- 7 stalls + a bonus (no solution / infinitely many solutions), about 6–10 minutes for one pass.
+- **5 exercises per stall** at the same difficulty: the authored one plus 4 generated ones, each proven by the solver to have a safe solution and to still need that stall's tool. Every stall load picks an exercise you didn't just play; after a stall (and in the pause menu) you choose **לדוכן הבא** or **תרגיל חדש בדוכן הזה**; "אותו תרגיל מההתחלה" retries the same one. The stall card shows `תרגיל 2/5`.
 - Three.js scene with Tripo-generated goose, vendor (rigged, 4 animation clips), sack and spice jar; everything mathematical is exact procedural geometry.
 - Hebrew RTL UI, formulas in LTR isolates, keyboard + mouse + touch.
 - Design reference mockups (ChatGPT image generation) in `docs/mockups/`.
@@ -14,12 +15,13 @@ npm install
 npm run dev        # http://localhost:5179
 npm test           # rules, solver and vendor tests (node:test via tsx)
 npm run build      # static build in dist/ (relative base, works offline)
+npm run gen-variants  # regenerate + verify the extra exercises into src/variants.ts
 npm run capture    # with the dev server running: real-Chrome smoke run + screenshots in docs/screenshots/
 ```
 
 ![Stall 1](docs/screenshots/02-stall1-gameplay.jpg)
 
-URL flags: `?stall=3` start at a stall, `?all` unlock every stall in the menus, `?touch` force the touch layout, `?debug` include hidden values in `render_game_to_text()`, `?test` don't auto-pause when the tab is hidden.
+URL flags: `?stall=3` start at a stall, `?ex=2` pick an exercise (with `?test`), `?all` unlock every stall in the menus, `?touch` force the touch layout, `?debug` include hidden values in `render_game_to_text()`, `?test` don't auto-pause when the tab is hidden.
 
 ## Controls
 
@@ -46,7 +48,8 @@ URL flags: `?stall=3` start at a stall, `?all` unlock every stall in the menus, 
 |---|---|
 | `src/rules.ts` | pure balance rules: items, pans, grab/drop/change/share, zero pairs, solved check, classify (bonus), equation string |
 | `src/vendor.ts` | pure attention cycle, honk geometry |
-| `src/levels.ts` | the 8 authored stalls |
+| `src/levels.ts` | the 8 stalls (authored exercise 1) and `variantsFor()` |
+| `src/generator.ts`, `src/variants.ts`, `scripts/gen-variants.ts` | per-stall exercise templates, the verified generated exercises, and the offline generator |
 | `src/solver.ts` | BFS proving each stall has a safe solution (≤ 2 unbalanced actions in a row) |
 | `src/game.ts` | controller: goose movement/collision, interactions, catching/reset, seesaw, bonus, `textState()` |
 | `src/view.ts`, `src/world.ts`, `src/textures.ts` | Three.js rendering, procedural shuk/scale/props, canvas textures |

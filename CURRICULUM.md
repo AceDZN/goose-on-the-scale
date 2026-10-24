@@ -35,6 +35,23 @@ The game turns that sentence into the stealth rule: the vendor only catches you 
 
 Optional context only: [g8 שאלות מילוליות במשוואות](https://math.workbook.co.il/grade-8/chapter-4/word-problems-equations) — the seesaw ("משקל של 2 שקים") is a tiny word problem; no level depends on it.
 
+## Practice: 5 exercises per stall
+
+Each stall has 5 exercises of the same shape (listed with `npx tsx` over `variantsFor()`; generated with `npm run gen-variants`). Examples:
+
+| Stall | Exercises |
+|---|---|
+| 1 | `x + 3 = 7`, `x + 3 = 8`, `x + 5 = 9`, `x + 5 = 13`, `x + 3 = 6` |
+| 2 | `2x + 1 = 9`, `2x + 3 = 15`, `2x + 1 = 7`, `2x + 3 = 17`, `2x + 1 = 15` |
+| 3 | `3x + 2 = x + 8`, `4x + 3 = x + 12`, `4x + 2 = 2x + 8`, `4x + 3 = x + 15`, `3x + 4 = x + 12` |
+| 4 | `2x + 5 = 17`, `2x + 3 = 17`, `2x + 2 = 14`, `2x + 5 = 13`, `2x + 2 = 16` (always with a 10 kg block) |
+| 5 | `3x − 2 = x + 6`, `4x − 1 = 2x + 5`, `3x − 1 = x + 7`, `3x − 3 = x + 9`, `3x − 2 = x + 10` |
+| 6 | `4x + 3 = 2x + 15`, `4x + 1 = 2x + 13`, `4x + 3 = 2x + 11`, `4x + 1 = 2x + 7`, `4x + 4 = 2x + 16` |
+| 7 | `5x − 4 = 2x + 11`, `5x − 2 = 2x + 16`, `5x − 3 = 2x + 15`, `5x − 4 = 2x + 5`, `5x − 3 = 2x + 12` |
+| 8 | identity/contradiction pairs with random constants; which scale is which is shuffled |
+
+Note stall 3 now also includes `÷3` (`4x + 3 = x + 12`) and stall 5 includes `4x − 1 = 2x + 5`. Same skills, different numbers and block layouts, so the pan picture can't be memorized.
+
 ## What the game deliberately does and does not claim
 
 - Equivalent operations are taught through consequence (tipping is seen, the vendor reacts, the stall resets to the last balanced state with an explanation of what changed on each pan). There is no answer box.

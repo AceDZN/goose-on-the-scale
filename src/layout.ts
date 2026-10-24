@@ -48,7 +48,7 @@ export function panSlot(i: number, n: number): { x: number; z: number } {
   const ring = i < 6 ? 0 : 1;
   const inRing = ring === 0 ? Math.min(n, 6) : n - 6;
   const idx = ring === 0 ? i : i - 6;
-  const r = ring === 0 ? (n === 2 ? 0.26 : 0.42) : 0.12;
+  const r = ring === 0 ? (n === 2 ? 0.31 : 0.42) : 0.12;
   const a = (idx / inRing) * Math.PI * 2 + (ring ? 0.5 : -Math.PI / 2);
   return { x: Math.cos(a) * r, z: Math.sin(a) * r };
 }
