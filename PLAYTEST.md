@@ -14,7 +14,9 @@ Date: 2026-10-24. Tester: the builder (automation + screenshots). **No child or 
   - vendor: the warning never catches, honk from behind distracts, honk from the scale side starts the turn, two offset vendors leave a ≥ 2.5 s shared window.
 - In-browser **autosolve** (`window.__debug.autosolve(i)`) drives the real game controller through the solver's moves on every stall (goose teleported to each spot): all 7 stalls reached `phase: solved` with the correct `x` (4, 4, 3, 6, 4, 6, 5) and 0 catches. The first run of stall 7 failed and exposed a real bug: E at the supply crate always handed over the last block (a 2 kg), so a player couldn't pick a 1 kg block to tie to a balloon. Fixed (E takes the block nearest the beak; supply blocks are clickable) and re-verified.
 
-## In a real browser (built-in browser pane + Chrome tab)
+## In a real browser (built-in browser pane, the user's Chrome, and headless Chrome via Playwright)
+
+- `npm run capture` (headless system Chrome, Playwright 1.64.1) replays the key moments and writes `docs/screenshots/*.jpg`: title, stall-1 gameplay, caught, seesaw, launch, stalls 2/5/6/7, bonus, phone landscape. Last run: **0 console errors**, autosolve of stalls 1–6 correct.
 
 - Title screen over the live 3D scene; Hebrew logo, play / stall select / how-to, medallions with stars, key chips.
 - Stall 1 full run by script: two pair-removals → solved card `x = 4` → vendor celebrates → chalk tag shows `x = 4` → seesaw loaded with 4 × 2 kg (catapult pose: goose on the lowered end) → launch → perfect → 3-star result panel.
@@ -36,7 +38,7 @@ Date: 2026-10-24. Tester: the builder (automation + screenshots). **No child or 
 
 An adaptive pixel ratio steps resolution down (2 → 1) if the live frame rate stays under 45 fps for 3 s. Real-device FPS on a school laptop or phone was **not** measured.
 
-Bundle: JS 761 kB (203 kB gzip), CSS 17 kB, fonts ≈ 150 kB, models 2.5 MB; `dist/` ≈ 3.4 MB.
+Bundle: JS ≈ 765 kB (≈ 205 kB gzip), CSS 17 kB, fonts ≈ 150 kB, models ≈ 2.6 MB; `dist/` 4.0 MB.
 
 ## Known limits
 
