@@ -600,6 +600,7 @@ body.touch .toast {
   font-weight: 800;
   color: var(--teal-dark);
 }
+.panel .big-x,
 .card-body .big-x {
   font: 900 2.4rem 'Rubik', sans-serif;
   direction: ltr;

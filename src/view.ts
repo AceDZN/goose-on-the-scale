@@ -354,6 +354,8 @@ export class View {
   private syncGoose(game: Game, dt: number) {
     const g = game.goose;
     const target = new THREE.Vector3(g.x, g.y, g.z);
+    // standing on the seesaw's lowered goose end
+    if (this.seesaw && game.phase === 'solved' && Math.hypot(g.x - SEESAW.gooseEnd.x, g.z - SEESAW.gooseEnd.z) < 0.5) target.y += 0.52;
     if (game.phase === 'flying' || game.phase === 'launching') this.goose.position.copy(target);
     else this.goose.position.lerp(target, Math.min(1, dt * 20));
     let dy = g.yaw - this.goose.rotation.y;
@@ -492,11 +494,12 @@ export class View {
       const needleTarget = showDial ? -Math.sign(d) * Math.min(1, Math.abs(d) / 6) * 1.1 : 0;
       rig.needle.rotation.z += (needleTarget - rig.needle.rotation.z) * Math.min(1, dt * 8);
       // chalk tag (hint)
-      const showChalk = game.hintOn && game.def.hint;
+      const solved = game.solvedX !== null && i === 0;
+      const showChalk = (game.hintOn && game.def.hint) || solved;
       rig.chalk.visible = showChalk;
       (rig.chalk.userData.cords as THREE.Object3D).visible = showChalk;
       if (showChalk) {
-        const text = equationString(sc);
+        const text = solved ? `x = ${game.solvedX}` : equationString(sc);
         if (text !== this.lastChalk + i) {
           rig.setChalk(text);
           this.lastChalk = text + i;
@@ -658,8 +661,9 @@ export class View {
     if (this.seesaw) {
       const s = this.seesaw;
       const load = game.stall.seesaw.length;
-      let want = load ? -0.2 : 0.2; // bucket end down when loaded, goose end down when empty
-      if (game.phase === 'flying' && game.flight) want = game.flight.outcome === 'short' ? -0.05 : 0.25;
+      // catapult pose: goose end down, bucket held up; on launch the load slams the bucket end down
+      let want = 0.2 - Math.min(0.08, load * 0.01);
+      if (game.phase === 'flying' && game.flight) want = game.flight.outcome === 'short' ? 0.05 : -0.24;
       s.angle += (want - s.angle) * Math.min(1, dt * (game.phase === 'flying' ? 20 : 6));
       s.plank.rotation.z = s.angle;
     }

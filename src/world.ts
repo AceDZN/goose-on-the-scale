@@ -705,7 +705,7 @@ export function buildSeesaw(): SeesawRig {
   const arm = box(1.4, 0.08, 0.08, darkWood(), -0.35, 2.55, -0.75);
   g.add(post, arm);
   const signTex = signTexture(['?'], 512, 256);
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.65), new THREE.MeshBasicMaterial({ map: signTex }));
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.66), new THREE.MeshBasicMaterial({ map: signTex }));
   sign.position.set(-0.35, 2.12, -0.72);
   g.add(sign);
 
@@ -718,7 +718,7 @@ export function buildSeesaw(): SeesawRig {
     angle: 0,
     setSign(n, unknown) {
       const text = n === null ? ['נדנדה נעולה', '🔒'] : [`${n} × ${unknown === 'jar' ? 'צנצנת' : 'שק'}`, 'משקל לשיגור'];
-      (sign.material as THREE.MeshBasicMaterial).map = signTexture(text, 512, 256);
+      (sign.material as THREE.MeshBasicMaterial).map = signTexture(text, 680, 300);
       (sign.material as THREE.MeshBasicMaterial).needsUpdate = true;
     },
   };

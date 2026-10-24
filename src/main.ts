@@ -572,7 +572,7 @@ function showStallDone(stars: number) {
   setTimeout(() => {
     panel(`<h2>${game.def.title} — עברתם!</h2>
       <div class="result-stars">${labels.map((l, i) => `<figure><span class="star ${got[i] ? 'on' : ''}"></span>${l}</figure>`).join('')}</div>
-      <p>${stars} מתוך 3 כוכבים. <bdi dir="ltr">x = ${game.solvedX}</bdi></p>
+      <p>${stars} מתוך 3 כוכבים</p><p class="big-x"><bdi dir="ltr">x = ${game.solvedX}</bdi></p>
       ${last ? '<p><b>סיימתם את כל הדוכנים בשוק!</b> נשאר רק בונוס אחד מכושף…</p>' : ''}
       <div class="col"><button class="btn teal" id="next">${last ? 'לבונוס: המאזניים המכושפים' : 'לדוכן הבא'}</button><button class="btn cream" id="again">לשחק שוב בדוכן</button></div>`);
     $('next').addEventListener('click', () => startGame(game.stallIndex + 1));
