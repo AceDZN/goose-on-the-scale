@@ -501,9 +501,11 @@ kbd {
   height: 44px;
 }
 .t-flap {
+  position: absolute;
   width: 72px;
   height: 72px;
-  margin-bottom: 70px;
+  right: 22px;
+  bottom: 128px;
   font-size: 0.8rem !important;
 }
 .t-flap svg {
@@ -524,10 +526,9 @@ body.touch .honk .goose-ico {
 }
 body.touch .objective {
   bottom: auto;
-  top: calc(max(14px, env(safe-area-inset-top)) + 64px);
-  right: 50%;
-  transform: translateX(50%);
-  max-width: 70vw;
+  top: calc(max(14px, env(safe-area-inset-top)) + 72px);
+  right: max(16px, env(safe-area-inset-right));
+  max-width: 46vw;
   padding: 4px 14px;
   font-size: 0.95rem;
   border-radius: 999px;
@@ -537,7 +538,11 @@ body.touch .objective .target {
   height: 24px;
 }
 body.touch .bottom-center {
-  bottom: calc(max(16px, env(safe-area-inset-bottom)));
+  bottom: auto;
+  top: calc(max(14px, env(safe-area-inset-top)) + 66px);
+  left: max(16px, env(safe-area-inset-left));
+  transform: none;
+  align-items: flex-start;
 }
 body.touch .prompt kbd {
   display: none;
@@ -944,7 +949,8 @@ body.touch .toast {
   .t-flap {
     width: 60px;
     height: 60px;
-    margin-bottom: 56px;
+    right: 18px;
+    bottom: 106px;
   }
   body.touch .honk {
     width: 76px;
@@ -990,7 +996,7 @@ body.touch .toast {
     top: 9vh;
   }
   body.touch .bottom-center {
-    bottom: calc(max(16px, env(safe-area-inset-bottom)) + 130px);
+    top: calc(max(14px, env(safe-area-inset-top)) + 150px);
   }
 }
 

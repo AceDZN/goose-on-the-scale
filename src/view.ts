@@ -771,7 +771,7 @@ export class View {
       if (d < best) {
         best = d;
         const w = Math.max(0, Math.min(1, (5.5 - d) / 3)) * 0.7;
-        target.lerp(new THREE.Vector3(sc.pos.x, 1.3, sc.pos.z - 0.3), w);
+        target.lerp(new THREE.Vector3(sc.pos.x, aspect > 1.8 ? 1.75 : 1.3, sc.pos.z - 0.3), w);
       }
     }
     if (game.phase === 'flying') target.y = g.y + 1;
