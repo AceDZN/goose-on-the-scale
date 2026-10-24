@@ -1,6 +1,7 @@
 // Procedural shuk geometry: the stall, the exact brass scale, weights, balloons, change box,
 // share board, seesaw. Math-critical shapes are built here, never from generated meshes.
 import * as THREE from 'three';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type { Item } from './rules.ts';
 import type { StallDef } from './levels.ts';
 import {
@@ -58,6 +59,41 @@ function box(w: number, h: number, d: number, mat: THREE.Material, x = 0, y = 0,
   const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
   m.position.set(x, y, z);
   return m;
+}
+
+/**
+ * Static batching: merge every plain mesh under `root` that shares a material into one mesh,
+ * baked into root's local space. Cuts hundreds of draw calls (chain links, spice cones, bulbs).
+ */
+export function mergeStatic(root: THREE.Object3D, skip?: (m: THREE.Mesh) => boolean) {
+  root.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(root.matrixWorld).invert();
+  const buckets = new Map<string, { mat: THREE.Material; geos: THREE.BufferGeometry[]; cast: boolean; receive: boolean }>();
+  const remove: THREE.Mesh[] = [];
+  root.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh || Array.isArray(m.material) || (m as unknown as THREE.SkinnedMesh).isSkinnedMesh || skip?.(m)) return;
+    let g = m.geometry.clone();
+    if (g.index) g = g.toNonIndexed();
+    for (const name of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(name)) g.deleteAttribute(name);
+    if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
+    if (!g.attributes.normal) g.computeVertexNormals();
+    g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld));
+    const key = `${m.material.uuid}|${m.castShadow}|${m.receiveShadow}`;
+    let b = buckets.get(key);
+    if (!b) buckets.set(key, (b = { mat: m.material, geos: [], cast: m.castShadow, receive: m.receiveShadow }));
+    b.geos.push(g);
+    remove.push(m);
+  });
+  for (const m of remove) m.removeFromParent();
+  for (const b of buckets.values()) {
+    const merged = mergeGeometries(b.geos, false);
+    if (!merged) continue;
+    const mesh = new THREE.Mesh(merged, b.mat);
+    mesh.castShadow = b.cast;
+    mesh.receiveShadow = b.receive;
+    root.add(mesh);
+  }
 }
 
 // ------------------------------------------------------------------ environment
@@ -236,6 +272,12 @@ export function buildEnvironment(def: StallDef): Environment {
     }
   }
 
+  // small decorative pieces don't need to cast shadows
+  g.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (m.isMesh && (m.geometry.type === 'ConeGeometry' || (m.geometry.type === 'SphereGeometry' && (m.geometry as THREE.SphereGeometry).parameters.radius < 0.12))) m.castShadow = false;
+  });
+  mergeStatic(g, (m) => awnings.includes(m));
   return { group: g, bulbs, awnings };
 }
 
@@ -376,6 +418,7 @@ export function buildScale(): ScaleRig {
     const hook = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.012, 6, 14), BRASS);
     hook.position.y = -0.02;
     hang.add(hook);
+    mergeStatic(hang);
     hang.position.set(side === 'L' ? -PAN_OFFSET : PAN_OFFSET, BEAM_Y, 0);
     const tray = new THREE.Group();
     tray.position.y = -HANG + 0.03;
@@ -471,20 +514,27 @@ function labelMat(v: number) {
   return m;
 }
 
-export function blockMesh(value: number): THREE.Group {
+const blockGeoCache = new Map<number, { iron: THREE.BufferGeometry; band: THREE.BufferGeometry; h: number }>();
+
+function blockGeometry(value: number) {
+  let c = blockGeoCache.get(value);
+  if (c) return c;
   const { r, h } = blockSize[value] ?? blockSize[1];
+  const body = new THREE.CylinderGeometry(r * 0.92, r, h, 20).translate(0, h / 2, 0);
+  const shoulder = new THREE.CylinderGeometry(r * 0.55, r * 0.92, h * 0.22, 20).translate(0, h + h * 0.11, 0);
+  const knob = new THREE.SphereGeometry(r * 0.38, 12, 8).translate(0, h * 1.32, 0);
+  const iron = mergeGeometries([body, shoulder, knob].map((g) => g.toNonIndexed()), false)!;
+  const band = new THREE.CylinderGeometry(r * 0.965, r * 1.005, h * 0.62, 20, 1, true, -Math.PI * 0.42, Math.PI * 0.84).translate(0, h * 0.5, 0);
+  c = { iron, band, h };
+  blockGeoCache.set(value, c);
+  return c;
+}
+
+export function blockMesh(value: number): THREE.Group {
+  const geo = blockGeometry(value);
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.92, r, h, 20), IRON);
-  body.position.y = h / 2;
-  const shoulder = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.55, r * 0.92, h * 0.22, 20), IRON);
-  shoulder.position.y = h + h * 0.11;
-  const knob = new THREE.Mesh(new THREE.SphereGeometry(r * 0.38, 12, 8), IRON);
-  knob.position.y = h * 1.32;
-  // curved label band facing the camera
-  const band = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.965, r * 1.005, h * 0.62, 20, 1, true, -Math.PI * 0.42, Math.PI * 0.84), labelMat(value));
-  band.position.y = h * 0.5;
-  g.add(body, shoulder, knob, band);
-  g.userData.height = h * 1.45;
+  g.add(new THREE.Mesh(geo.iron, IRON), new THREE.Mesh(geo.band, labelMat(value)));
+  g.userData.height = geo.h * 1.45;
   return shadowy(g);
 }
 

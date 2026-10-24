@@ -188,8 +188,12 @@ export function signTexture(lines: string[], w = 512, h = 256, bg = '#f3e6c4', f
   g.textAlign = 'center';
   g.textBaseline = 'middle';
   g.direction = dir;
-  const size = Math.min(84, (h - 40) / lines.length - 6);
+  let size = Math.min(84, (h - 40) / lines.length - 6);
   g.font = `800 ${size}px ${FONT}`;
+  while (size > 18 && Math.max(...lines.map((l) => g.measureText(l).width)) > w - 44) {
+    size -= 2;
+    g.font = `800 ${size}px ${FONT}`;
+  }
   lines.forEach((ln, i) => g.fillText(ln, w / 2, h / 2 + (i - (lines.length - 1) / 2) * (size + 8)));
   return tex(c);
 }

@@ -77,6 +77,8 @@ export class View {
   shake = 0;
   dialTimer = 0;
   reducedMotion = false;
+  /** Phone landscape: the HUD covers more of the frame, so the camera looks a little higher. */
+  shortScreen = false;
   titleMode = true;
   private time = 0;
   private lastChalk = '';
@@ -775,7 +777,7 @@ export class View {
       if (d < best) {
         best = d;
         const w = Math.max(0, Math.min(1, (5.5 - d) / 3)) * 0.7;
-        target.lerp(new THREE.Vector3(sc.pos.x, aspect > 1.8 ? 1.75 : 1.3, sc.pos.z - 0.3), w);
+        target.lerp(new THREE.Vector3(sc.pos.x, this.shortScreen ? 1.75 : 1.3, sc.pos.z - 0.3), w);
       }
     }
     if (game.phase === 'flying') target.y = g.y + 1;

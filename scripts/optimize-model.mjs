@@ -1,13 +1,13 @@
 // Reduce a Tripo GLB for the web: sloppy simplify (ignores UV seams, which block regular
 // simplification on Tripo meshes), compact, resize textures to WebP, meshopt compression.
-// Usage: node scripts/optimize-model.mjs in.glb out.glb <targetTriangles> [textureSize]
+// Usage: node scripts/optimize-model.mjs in.glb out.glb <targetTriangles> [textureSize] [maxError]
 import { NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { compactPrimitive, dedup, meshopt, prune, textureCompress, weld } from '@gltf-transform/functions';
 import { MeshoptEncoder, MeshoptSimplifier } from 'meshoptimizer';
 import sharp from 'sharp';
 
-const [, , input, output, targetArg = '12000', texArg = '1024'] = process.argv;
+const [, , input, output, targetArg = '12000', texArg = '1024', errArg = '0.02'] = process.argv;
 const target = Number(targetArg);
 const texSize = Number(texArg);
 
@@ -26,7 +26,7 @@ for (const mesh of doc.getRoot().listMeshes()) {
     if (tris <= target) continue;
     const positions = new Float32Array(pos.getArray());
     const indices = new Uint32Array(idx.getArray());
-    const [out, err] = MeshoptSimplifier.simplifySloppy(indices, positions, 3, null, target * 3, 0.02);
+    const [out, err] = MeshoptSimplifier.simplifySloppy(indices, positions, 3, null, target * 3, Number(errArg));
     idx.setArray(new Uint32Array(out));
     compactPrimitive(prim);
     console.log(`${mesh.getName()}: ${tris} → ${out.length / 3} triangles (error ${err.toFixed(4)})`);

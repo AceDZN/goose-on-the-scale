@@ -122,6 +122,7 @@ let last = performance.now();
 let acc = 0;
 let frames = 0;
 let fpsT = 0;
+let slowSeconds = 0;
 
 function frame(now: number) {
   const dt = Math.min(0.1, (now - last) / 1000);
@@ -132,6 +133,14 @@ function frame(now: number) {
     fps = frames / fpsT;
     frames = 0;
     fpsT = 0;
+    // adaptive resolution: step the pixel ratio down while the frame rate stays low
+    if (started && !paused && !document.hidden && fps < 45) slowSeconds++;
+    else slowSeconds = 0;
+    if (slowSeconds >= 3 && renderer.getPixelRatio() > 1) {
+      renderer.setPixelRatio(Math.max(1, renderer.getPixelRatio() - 0.25));
+      resize();
+      slowSeconds = 0;
+    }
   }
   if (!manualTime) {
     acc += dt;
@@ -594,6 +603,7 @@ function resize() {
   renderer.setSize(innerWidth, innerHeight, false);
   if (view) {
     view.camera.aspect = innerWidth / innerHeight;
+    view.shortScreen = innerHeight < 500;
     view.camera.updateProjectionMatrix();
   }
 }
@@ -605,7 +615,7 @@ declare global {
     render_game_to_text: () => string;
     advanceTime: (ms: number) => void;
     __game: () => Game;
-    __debug: { fps: () => number; start: (i: number) => void; act: (a: string) => void; move: (x: number, z: number, ms: number) => void; info: () => unknown };
+    __debug: { bench: (n?: number) => unknown; pixelRatio: () => number; fps: () => number; start: (i: number) => void; act: (a: string) => void; move: (x: number, z: number, ms: number) => void; info: () => unknown };
   }
 }
 
@@ -633,6 +643,22 @@ window.__debug = {
     }
     render();
   },
+  bench: (n = 120) => {
+    // synchronous render timing (works even when the tab is in the background and rAF is paused)
+    const gl = renderer.getContext();
+    const px = new Uint8Array(4);
+    renderer.render(view.scene, view.camera);
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    const t0 = performance.now();
+    for (let i = 0; i < n; i++) {
+      step(STEP);
+      renderer.render(view.scene, view.camera);
+    }
+    gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px);
+    const ms = (performance.now() - t0) / n;
+    return { msPerFrame: Math.round(ms * 100) / 100, fpsEquivalent: Math.round(1000 / ms), size: [innerWidth, innerHeight, devicePixelRatio], ...renderer.info.render };
+  },
+  pixelRatio: () => renderer.getPixelRatio(),
   info: () => ({ draws: renderer.info.render.calls, tris: renderer.info.render.triangles, geos: renderer.info.memory.geometries }),
 };
 
