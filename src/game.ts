@@ -285,6 +285,7 @@ export class Game {
     this.vendors = this.vendors.map((v, i) => tickVendor(v, this.vcfgs[i], dt));
     this.vendors.forEach((v, i) => {
       if (v.mode !== before[i]) this.emit('vendorMode', { vendor: i, mode: v.mode, from: before[i] });
+      if (v.mode === 'warning' && before[i] === 'away') this.tip('warning', 'סימן שאלה = המוכר מסתובב! עוד רגע הוא יסתכל על המאזניים.');
     });
 
     // goose
@@ -293,6 +294,10 @@ export class Game {
       move = { x: 0, z: 0 };
     }
     this.moveGoose(dt, move);
+
+    if (this.phase === 'play' && !this.def.bonus && this.honkCd === 0 && this.honkWouldDistract()) {
+      this.tip('honkzone', 'מכאן גהגה (Q) יסיח את המוכר: הוא יסתכל אליך — הרחק מהמאזניים.');
+    }
 
     // stealth check
     if (this.phase === 'play' && !this.def.bonus) {
@@ -447,6 +452,15 @@ export class Game {
     g.y = 0.001;
     g.flapT = 0.4;
     this.emit('flap');
+  }
+
+  /** One-time contextual tips on the first stalls (and the first time a mechanic appears). */
+  tipsSeen = new Set<string>();
+  tip(key: string, text: string) {
+    if (this.tipsSeen.has(key) || this.stallIndex > 2 && !['balloon', 'bundle'].includes(key)) return;
+    if (this.message) return;
+    this.tipsSeen.add(key);
+    this.toast(text, 3.4);
   }
 
   toast(text: string, ttl = 2.2) {
@@ -650,6 +664,10 @@ export class Game {
     const bal = isBalanced(this.scale);
     if (bal) this.snapshot = structuredClone(this.stall);
     if (bal !== wasBalanced) this.emit(bal ? 'balanced' : 'tipped');
+    if (!bal && wasBalanced) this.tip('tipped', 'הכף נטתה! מהר — אותו דבר גם מהכף השנייה, לפני שהמוכר מסתובב.');
+    if (bal && !wasBalanced) this.tip('rebalanced', 'מאוזן שוב. עכשיו המוכר יכול להסתכל כמה שהוא רוצה.');
+    if (this.stall.beak?.kind === 'balloon') this.tip('balloon', 'בלון ביד = הכף שלו נהייתה כבדה יותר. בלון שווה 1− ק״ג.');
+    if (this.stall.beak?.kind === 'bundle') this.tip('bundle', 'צרור עודף: אותו משקל, משקולות קטנות יותר. החזירו אותו לאותה כף.');
     if (this.phase === 'play' && !this.def.bonus) {
       const x = solvedValue(this.scale);
       if (x !== null) this.solve(x);

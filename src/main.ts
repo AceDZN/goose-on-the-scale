@@ -176,6 +176,7 @@ function handleAction(a: string) {
   switch (a) {
     case 'interact':
       game.interact();
+      if (game.phase === 'bonusDone' && !game.message) showFinale();
       break;
     case 'honk':
       game.honk();
@@ -395,6 +396,7 @@ function wireUi() {
   $('card-btn').addEventListener('click', () => {
     initAudio();
     game.dismissMessage();
+    if (game.phase === 'bonusDone') showFinale();
   });
   $('btn-play').addEventListener('click', () => {
     const next = Math.min(progress.unlocked, STALLS.length) - 1;
@@ -576,6 +578,16 @@ function showStallDone(stars: number) {
     $('next').addEventListener('click', () => startGame(game.stallIndex + 1));
     $('again').addEventListener('click', () => startGame(game.stallIndex));
   }, 600);
+}
+
+function showFinale() {
+  const total = STALLS.filter((s) => !s.bonus).reduce((a, s) => a + (progress.stars[s.id] ?? 0), 0);
+  panel(`<h2>השוק כולו שלכם!</h2>
+    <p>⭐ <bdi dir="ltr">${total} / 21</bdi> כוכבים · 🪶 <bdi dir="ltr">${game.feathers} / 2</bdi> נוצות זהב</p>
+    <p>גיליתם את המשקל של כל השקים בשוק — בלי לשבור את האיזון. ובמאזניים המכושפים ראיתם שלא לכל משוואה יש פתרון יחיד.</p>
+    <div class="col"><button class="btn teal" id="fin-title">למסך הפתיחה</button><button class="btn cream" id="fin-select">בחירת דוכן</button></div>`);
+  $('fin-title').addEventListener('click', () => goTitle());
+  $('fin-select').addEventListener('click', () => showSelect());
 }
 
 function resize() {

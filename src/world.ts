@@ -546,8 +546,8 @@ export function itemMesh(item: Item, models: ItemModels): THREE.Object3D {
   let o: THREE.Object3D;
   switch (item.kind) {
     case 'sack':
-      o = models.sack ? fitModel(models.sack, 0.52) : sackFallback();
-      o.userData.height = 0.52;
+      o = models.sack ? fitModel(models.sack, 0.44) : sackFallback();
+      o.userData.height = 0.44;
       break;
     case 'jar':
       o = models.jar ? fitModel(models.jar, 0.46) : sackFallback();
@@ -609,8 +609,8 @@ export function buildChangeBox(): THREE.Group {
   const sign = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.32), new THREE.MeshBasicMaterial({ map: signTexture(['קופת', 'עודף'], 256, 140, '#f3e6c4', '#3b2a1a') }));
   sign.position.set(0, 0.27, 0.281);
   g.add(sign);
-  const tag = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.36), new THREE.MeshBasicMaterial({ map: signTexture(['10→5+5 · 5→2+2+1 · 2→1+1'], 512, 120, '#fff6df', '#3b2a1a'), transparent: true }));
-  tag.position.set(0, 0.82, 0);
+  const tag = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.5), new THREE.MeshBasicMaterial({ map: signTexture(['10 → 5+5', '5 → 2+2+1', '2 → 1+1'], 420, 260, '#fff6df', '#3b2a1a', 'ltr'), transparent: true }));
+  tag.position.set(0, 0.98, 0);
   tag.userData.billboard = true;
   g.add(tag);
   g.position.set(CHANGE_BOX.x, 0, CHANGE_BOX.z);
@@ -636,7 +636,7 @@ export function buildShareBoard(): { group: THREE.Group; plates: THREE.Mesh[] } 
   g.add(plank);
   const plates: THREE.Mesh[] = [];
   for (const p of SHARE_PLATES) {
-    const t = signTexture([`÷${p.k}`], 256, 256, '#f6ead0', '#2b2016');
+    const t = signTexture([`÷${p.k}`], 256, 256, '#f6ead0', '#2b2016', 'ltr');
     const m = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.06, 0.86), [CREAM, CREAM, new THREE.MeshStandardMaterial({ map: t, roughness: 0.7 }), CREAM, CREAM, CREAM]);
     m.position.set(p.x, 0.07, p.z);
     m.userData.k = p.k;

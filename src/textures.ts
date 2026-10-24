@@ -176,7 +176,7 @@ export function drawChalk(g: CanvasRenderingContext2D, text: string, w: number, 
 }
 
 /** Hebrew sign: cream board with dark text (RTL). */
-export function signTexture(lines: string[], w = 512, h = 256, bg = '#f3e6c4', fg = '#2b2016'): THREE.CanvasTexture {
+export function signTexture(lines: string[], w = 512, h = 256, bg = '#f3e6c4', fg = '#2b2016', dir: CanvasDirection = 'rtl'): THREE.CanvasTexture {
   const [c, g] = canvas(w, h);
   g.fillStyle = '#7a4d27';
   roundRect(g, 0, 0, w, h, 24);
@@ -187,7 +187,7 @@ export function signTexture(lines: string[], w = 512, h = 256, bg = '#f3e6c4', f
   g.fillStyle = fg;
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  g.direction = 'rtl';
+  g.direction = dir;
   const size = Math.min(84, (h - 40) / lines.length - 6);
   g.font = `800 ${size}px ${FONT}`;
   lines.forEach((ln, i) => g.fillText(ln, w / 2, h / 2 + (i - (lines.length - 1) / 2) * (size + 8)));

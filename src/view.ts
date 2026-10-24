@@ -63,6 +63,8 @@ export class View {
   gooseBody = new THREE.Group();
   gooseMixer: THREE.AnimationMixer | null = null;
   gooseActions: Record<string, THREE.AnimationAction> = {};
+  neckBones: THREE.Bone[] = [];
+  neckRest: THREE.Quaternion[] = [];
   vendors: VendorView[] = [];
   items = new Map<number, THREE.Object3D>();
   dying: { obj: THREE.Object3D; t: number; vel: THREE.Vector3 }[] = [];
@@ -143,9 +145,13 @@ export class View {
   private buildGoose() {
     const m = this.models.goose;
     if (m) {
-      const model = this.models.gooseClips.length ? SkeletonUtils.clone(m) : m.clone(true);
+      const model = SkeletonUtils.clone(m);
       normalize(model, 0.82);
       this.gooseBody.add(model);
+      model.traverse((o) => {
+        if ((o as THREE.Bone).isBone && /Head_[0-3]$/.test(o.name)) this.neckBones.push(o as THREE.Bone);
+      });
+      this.neckRest = this.neckBones.map((b) => b.quaternion.clone());
       if (this.models.gooseClips.length) {
         this.gooseMixer = new THREE.AnimationMixer(model);
         for (const c of this.models.gooseClips) this.gooseActions[c.name.toLowerCase()] = this.gooseMixer.clipAction(c);
@@ -379,6 +385,14 @@ export class View {
     if (blob) {
       blob.position.y = -g.y + 0.01;
       blob.scale.setScalar(Math.max(0.3, 1 - g.y * 0.15));
+    }
+    // neck: bob with each step, stretch forward on a honk, crane up when holding something
+    if (!this.gooseMixer && this.neckBones.length) {
+      const bob = g.moving ? Math.sin(this.walkPhase * 2) * 0.09 * rm : Math.sin(this.time * 1.6) * 0.03;
+      const tilt = bob - honk * 0.22 + (g.stun > 0 ? Math.sin(this.time * 30) * 0.2 : 0);
+      this.neckBones.forEach((b, i) => {
+        b.quaternion.copy(this.neckRest[i]).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(tilt, 0, 0)));
+      });
     }
     if (this.gooseMixer) {
       const want = g.moving ? ['walk', 'run'] : ['idle'];
