@@ -14,6 +14,7 @@ import { initAudio, isMuted, setMuted, sfx } from './audio.ts';
 import { seesawLoad } from './rules.ts';
 import { solve } from './solver.ts';
 import { CHANGE_BOX, SHARE_PLATES, SUPPLY, panCenter } from './layout.ts';
+import { initHost, parseLevelParam, postToHost } from './host.ts';
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const STEP = 1 / 60;
@@ -46,6 +47,10 @@ function writeJSON(key: string, v: unknown) {
 }
 
 const params = new URLSearchParams(location.search);
+initHost('goose-on-the-scale');
+// `?level=N` (a workbook lesson's link) is `?stall=N&autostart`.
+const deepStall = parseLevelParam(location.search, STALLS.length) ?? parseLevelParam(location.search, STALLS.length, 'stall');
+let stallStartedAt = 0;
 const progress: Progress = readJSON(PROGRESS_KEY, { stars: {}, unlocked: 1, feathers: 0 });
 if (params.has('all')) progress.unlocked = STALLS.length;
 const settings = readJSON(SETTINGS_KEY, { muted: false, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches });
@@ -88,7 +93,7 @@ async function boot() {
   await document.fonts.load('800 32px Rubik').catch(() => undefined);
   const models = await loadModels((d, t) => ($('loading').textContent = `טוען את השוק… ${d}/${t}`));
   $('loading').classList.add('hidden');
-  game = new Game(Number(params.get('stall') ?? 1) - 1 || 0);
+  game = new Game(deepStall ?? 0);
   game.onLog = (e) => {
     const log = readJSON<unknown[]>(LOG_KEY, []);
     log.push(e);
@@ -116,7 +121,8 @@ async function boot() {
     sack: !!models.sack,
     jar: !!models.jar,
   };
-  if (params.has('autostart')) startGame(game.stallIndex);
+  postToHost({ type: 'ready' });
+  if (params.has('autostart') || params.has('level')) startGame(game.stallIndex);
   requestAnimationFrame(frame);
 }
 
@@ -263,6 +269,7 @@ function onEvents(events: GameEvent[]) {
       case 'stallDone':
         sfx.solved();
         saveProgress();
+        postToHost({ type: 'level-complete', level: game.stallIndex + 1, stars: e.stars as number, durationMs: Math.round(performance.now() - stallStartedAt) });
         showStallDone(e.stars as number);
         break;
       case 'stampRight':
@@ -466,6 +473,8 @@ function startGame(index: number, exercise?: number) {
   game.loadStall(index, exercise ?? (params.has('test') ? Number(params.get('ex') ?? 1) - 1 : undefined));
   view.loadStall(game);
   canvas.focus();
+  stallStartedAt = performance.now();
+  postToHost({ type: 'level-start', level: game.stallIndex + 1 });
 }
 
 function newExercise() {
